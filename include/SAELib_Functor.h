@@ -219,12 +219,12 @@ namespace sae
 			{};
 
 			constexpr explicit functor_impl(const functor_impl& _o) :
-				ptr_{ _o.ptr_->clone() }
+				ptr_{ (_o)? _o.ptr_->clone() : nullptr }
 			{};
 			functor_impl& operator=(const functor_impl& _o)
 			{
 				delete ptr_;
-				ptr_ = _o.ptr_->clone();
+				ptr_ = (_o)? _o.ptr_->clone() : nullptr ;
 				return *this;
 			};
 
