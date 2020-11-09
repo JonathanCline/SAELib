@@ -36,11 +36,11 @@ namespace sae
 			this->r_to_l_.insert({ _pair.second, _pair.first });
 		};
 
-		bool contains_left(const left_type& _l)
+		bool contains_left(const left_type& _l) const
 		{
 			return this->l_to_r_.count(_l) != 0;
 		};
-		bool contains_right(const right_type& _r)
+		bool contains_right(const right_type& _r) const
 		{
 			return this->r_to_l_.count(_r) != 0;
 		};
