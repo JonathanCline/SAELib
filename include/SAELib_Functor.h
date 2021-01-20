@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SAE_FUNCTOR_H
 #define SAE_FUNCTOR_H
 

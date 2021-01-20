@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SAE_LIB_CONCEPTS_H
 #define SAE_LIB_CONCEPTS_H
 
