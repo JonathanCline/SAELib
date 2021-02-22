@@ -61,7 +61,7 @@ namespace sae
 		osWindows,
 
 		osLinux,
-		osUnix, 
+		osUnix,
 		osPosix,
 
 		osMac,
@@ -69,34 +69,39 @@ namespace sae
 		osIPhoneSim,
 		osLinux
 	};
+}
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 
 #define SAELIB_OS_WINDOWS true
-
+namespace sae
+{
 	constexpr static OPERATING_SYSTEM_E target_os = OPERATING_SYSTEM_E::osWindows;
-
-#elif __APPLE__
-
 }
+#elif __APPLE__
 
 #include <TargetConditionals.h>
 
-namespace sae
-{
+
 
 #if TARGET_IPHONE_SIMULATOR
 #define SAELIB_OS_IPHONE_SIM true
+namespace sae
+{
 	constexpr static OPERATING_SYSTEM_E target_os = OPERATING_SYSTEM_E::osIPhoneSim;
-
+}
 #elif TARGET_OS_IPHONE
 #define SAELIB_OS_IPHONE true
+namespace sae
+{
 	constexpr static OPERATING_SYSTEM_E target_os = OPERATING_SYSTEM_E::osIPhone;
-
+}
 #elif TARGET_OS_MAC
 #define SAELIB_OS_MAC true
+namespace sae
+{
 	constexpr static OPERATING_SYSTEM_E target_os = OPERATING_SYSTEM_E::osMac;
-
+}
 #else
 #error "Unknown Apple platform"
 #endif
@@ -104,23 +109,28 @@ namespace sae
 #elif __linux__
 
 #define SAELIB_OS_LINUX true
-
+namespace sae
+{
 	constexpr static OPERATING_SYSTEM_E target_os = OPERATING_SYSTEM_E::osLinux;
-
+}
 #elif __unix__
 
 #define SAELIB_OS_UNIX true
+namespace sae
+{
 	constexpr static OPERATING_SYSTEM_E target_os = OPERATING_SYSTEM_E::osUnix;
-
+}
 #elif defined(_POSIX_VERSION)
 
 #define SAELIB_OS_POSIX true
+namespace sae
+{
 	constexpr static OPERATING_SYSTEM_E target_os = OPERATING_SYSTEM_E::osPosix;
+};
 
 #else
 # error "Unknown compiler target OS"
 #endif
 
-};
 
 #endif

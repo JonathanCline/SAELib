@@ -5,6 +5,8 @@
 
 namespace sae
 {
+	using std::nothrow_t;
+	using std::nothrow;
 
 	namespace literals
 	{
