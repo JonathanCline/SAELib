@@ -152,6 +152,18 @@ namespace sae
 
 			using return_type = ReturnT;
 
+			constexpr bool good() const noexcept { return this->ptr_ != nullptr; };
+
+			void release()
+			{
+				this->ptr_ = nullptr;
+			};
+			void reset()
+			{
+				delete this->ptr_;
+				this->release();
+			};
+			
 			inline ReturnT invoke(Args... _args) const
 			{
 				if constexpr (std::is_same<ReturnT, void>::value)
@@ -181,12 +193,12 @@ namespace sae
 			};
 			constexpr inline bool good_pointer() const noexcept
 			{
-				return (this->ptr_);
+				return this->good();
 			};
 
-			inline explicit operator bool() const noexcept
+			constexpr explicit operator bool() const noexcept
 			{
-				return (this->good_pointer());
+				return this->good();
 			};
 
 			constexpr functor_impl(ReturnT(*_func)(Args...)) :
@@ -241,8 +253,8 @@ namespace sae
 
 			~functor_impl()
 			{
-				delete ptr_;
-			}
+				this->reset();
+			};
 
 		private:
 			bool member_function_ = false;
@@ -256,24 +268,20 @@ namespace sae
 		struct funcExpander <Ret(T...)>
 		{
 			using type = functor_impl<Ret, T...>;
-			constexpr funcExpander() = default;
 		};
 
-		template <typename FunctionT>
-		constexpr static inline auto cx_make_functor_helper_v()
-		{
-			return funcExpander<FunctionT>{};
-		};
+		template <typename T>
+		using funcExpander_t = typename funcExpander<T>::type;
 
 		struct functor_type_tag {};
 
 	};
 
-	template <typename FunctionT>
-	struct functor : detail::functor_type_tag, public decltype(detail::cx_make_functor_helper_v<FunctionT>())::type
+	template <typename FunctionT> requires requires { detail::funcExpander_t<FunctionT>{}; }
+	struct functor : detail::functor_type_tag, public detail::funcExpander_t<FunctionT>
 	{
 	private:
-		using parent_type = typename decltype(detail::cx_make_functor_helper_v<FunctionT>())::type;
+		using parent_type = detail::funcExpander_t<FunctionT>;
 	public:
 		using parent_type::parent_type;
 		using parent_type::operator=;

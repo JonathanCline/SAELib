@@ -7,6 +7,7 @@
 #include <concepts>
 #include <type_traits>
 #include <string>
+#include <utility>
 
 namespace sae
 {
@@ -29,7 +30,10 @@ namespace sae
 	concept cx_constructable_from = std::is_constructible<T, U>::value;
 
 	template <typename T, typename... CArgs>
-	concept cx_constructible_from = std::is_constructible<T, CArgs...>::value;
+	concept cx_constructible_from = requires (CArgs&&... _args)
+	{
+		T{ std::forward<CArgs>(_args)... };
+	};
 
 	template <typename T>
 	concept cx_string_convertible = requires (T a)
@@ -135,25 +139,70 @@ namespace sae
 
 
 	template <typename T>
-	concept cx_hashable = requires (T a)
+	concept hashable = requires (T a)
 	{
 		std::hash<T>{}(a);
 	};
 
-	template <typename T>
-	constexpr static inline auto is_hashable_v()
+	namespace impl
 	{
-		return std::integral_constant<bool, false>{};
+		template <typename T>
+		constexpr static bool is_hashable_impl() noexcept
+		{
+			return false;
+		};
+		template <hashable T>
+		constexpr static bool is_hashable_impl() noexcept
+		{
+			return true;
+		};
 	};
 
-	template <cx_hashable T>
-	constexpr static inline auto is_hashable_v()
+	template <typename T>
+	struct is_hashable
 	{
-		return std::integral_constant<bool, true>{};
+		constexpr static bool value = impl::is_hashable_impl<T>();
 	};
 
 	template <typename T>
-	struct is_hashable_t : public decltype(is_hashable_v<T>()) {};
+	constexpr static bool is_hashable_v = is_hashable<T>::value;
+
+
+
+
+	namespace impl
+	{
+		template <typename ScopeT, typename MemberT>
+		static constexpr MemberT remove_scope_arg_deduction(MemberT ScopeT::* _p)
+		{};
+	};
+
+	template <typename T>
+	struct remove_scope
+	{
+		using type = decltype(impl::remove_scope_arg_deduction(std::declval<T>()));
+	};
+	template <typename T>
+	using remove_scope_t = typename remove_scope<T>::type;
+
+	template <typename T, typename... Args>
+	concept cx_constructible = requires(Args&&... _args)
+	{
+		T{ std::forward<Args>(_args)... };
+	};
+
+	template <typename T, typename U>
+	concept cx_forward = cx_same_as<U, std::remove_cvref_t<T>>;
+
+
+
+	template <typename T>
+	concept cx_character = std::same_as<char, T> || std::same_as<char8_t, T> || std::same_as<char16_t, T> || std::same_as<char32_t, T>;
+
+
+	template <typename T, typename... Ts>
+	concept cx_one_of = (std::same_as<T, Ts> || ...);
+
 
 }
 
