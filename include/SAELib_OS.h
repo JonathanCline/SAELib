@@ -67,7 +67,6 @@ namespace sae
 		osMac,
 		osIPhone,
 		osIPhoneSim,
-		osLinux
 	};
 }
 

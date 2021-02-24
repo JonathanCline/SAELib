@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SAELib_Type.h"
+
 namespace sae
 {
 
@@ -70,6 +72,58 @@ namespace sae
 	protected:
 		auto& get_container() noexcept { return this->get_derived_container(); };
 		const auto& get_container() const noexcept { return this->get_derived_container(); };
+
+	};
+
+	namespace impl
+	{
+
+		template <typename T, typename = void> struct Decorate_ForwardIterator_TypeAliases;
+		template <typename T> requires requires 
+		{ 
+			typename T::iterator; typename T::const_iterator; 
+		}
+		struct Decorate_ForwardIterator_TypeAliases<T, void>
+		{
+			using iterator = typename T::iterator;
+			using const_iterator = typename T::const_iterator;
+		};
+
+		template <typename T, typename = void> struct Decorate_ReverseIterator_TypeAliases;
+		template <typename T> requires requires { typename T::reverse_iterator; typename T::const_reverse_iterator; }
+		struct Decorate_ReverseIterator_TypeAliases<T, void>
+		{
+			using reverse_iterator = typename T::reverse_iterator;
+			using const_reverse_iterator = typename T::const_reverse_iterator;
+		};
+
+	};
+
+	template <typename ContainerT>
+	struct Decorate_IteratorTypeAliases : 
+		public conditional_type_template_t<impl::Decorate_ForwardIterator_TypeAliases, ContainerT>,
+		public conditional_type_template_t<impl::Decorate_ReverseIterator_TypeAliases, ContainerT>
+	{};
+	
+	template <typename T>
+	constexpr static bool has_forward_iterator_v = is_valid_template_parameter_list_v<impl::Decorate_ForwardIterator_TypeAliases, T>;
+	template <typename T>
+	constexpr static bool has_reverse_iterator_v = is_valid_template_parameter_list_v<impl::Decorate_ReverseIterator_TypeAliases, T>;
+
+	template <typename T, typename ContainerT>
+	struct Decorate_ContainerIterator :
+		public conditional_type_t<impl::Decorate_ForwardIterator_TypeAliases<ContainerT>, has_forward_iterator_v<ContainerT>>,
+		public conditional_type_t<Decorate_ForwardIterator<Decorate_ContainerIterator<T, ContainerT>>, has_forward_iterator_v<ContainerT>>,
+		public conditional_type_t<impl::Decorate_ReverseIterator_TypeAliases<ContainerT>, has_reverse_iterator_v<ContainerT>>,
+		public conditional_type_t<Decorate_ReverseIterator<Decorate_ContainerIterator<T, ContainerT>>, has_reverse_iterator_v<ContainerT>>
+	{
+	private:
+		friend Decorate_ForwardIterator<Decorate_ContainerIterator<T, ContainerT>>;
+		friend Decorate_ReverseIterator<Decorate_ContainerIterator<T, ContainerT>>;
+		auto& get_container() noexcept { return static_cast<T*>(this)->get_container(); };
+		const auto& get_container() const noexcept { return static_cast<const T*>(this)->get_container(); };
+
+	public:
 
 	};
 

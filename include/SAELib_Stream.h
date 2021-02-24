@@ -27,8 +27,8 @@ namespace sae
 			constexpr size_t _bufferLen = DRAIN_READ_CHUNK_SIZE_V;
 			const auto _maxReadCount = std::min<size_t>(_destSize, _bufferLen);
 
-			std::byte _readBuff[_bufferLen]{ std::byte{} };
-			std::fill_n(_readBuff, _bufferLen, std::byte{});
+			T _readBuff[_bufferLen]{ T{} };
+			std::fill_n(_readBuff, _bufferLen, T{});
 
 			auto _remainingCount = _destSize;
 
