@@ -1,6 +1,6 @@
 #pragma once
-#ifndef SAE_LIB_CONCEPTS_H
-#define SAE_LIB_CONCEPTS_H
+#ifndef SAELIB_CONCEPTS_H
+#define SAELIB_CONCEPTS_H
 
 #include "SAELib_Type.h"
 
