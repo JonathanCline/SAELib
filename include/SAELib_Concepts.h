@@ -53,11 +53,8 @@ namespace sae
 	struct is_int_convertible_t <T, T> : std::true_type {};
 
 	template <typename T>
-	concept cx_float_convertible = sae::cx_convertible_to<T, float_t> && !requires (T a)
-	{
-		a << 4;
-		a & 0x44;
-	};
+	concept cx_float_convertible = sae::cx_convertible_to<T, float_t> || std::floating_point<T>;
+
 	template <typename T, class = void>
 	struct is_float_convertible_t : std::false_type {};
 	template <cx_float_convertible T>
@@ -202,6 +199,23 @@ namespace sae
 
 	template <typename T, typename... Ts>
 	concept cx_one_of = (std::same_as<T, Ts> || ...);
+
+
+	template <typename IterT, typename T>
+	concept cx_iterator_of_type = requires(IterT _it)
+	{
+		{ *_it } -> std::convertible_to<T>;
+	};
+
+	template <typename IterT, typename T, typename = void>
+	struct is_iterator_of_type : public std::false_type {};
+
+	template <typename IterT, typename T> requires cx_iterator_of_type<IterT, T>
+	struct is_iterator_of_type<IterT, T, void> : public std::true_type {};
+
+	template <typename IterT, typename T>
+	constexpr static bool is_iterator_of_type_v = is_iterator_of_type<IterT, T>::value;
+
 
 
 }

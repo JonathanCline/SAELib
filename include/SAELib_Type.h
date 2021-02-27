@@ -23,8 +23,9 @@ namespace sae
 	{
 		using type = void;
 	};
-	
-	struct empty_t {};
+
+	template <typename T = void>
+	struct empty_t { using type = T; };
 
 	namespace impl
 	{
@@ -62,7 +63,7 @@ namespace sae
 	namespace impl
 	{
 		template <template <typename...> typename T, typename... U>
-		concept valid_template_parameter_list = std::is_default_constructible_v<T<U...>> && requires
+		concept valid_template_parameter_list = requires
 		{
 			T<U...>{};
 		};
@@ -97,7 +98,7 @@ namespace sae
 	template <typename T>
 	struct conditional_type<T, false>
 	{
-		using type = empty_t;
+		using type = empty_t<T>;
 	};
 
 	template <typename T, bool Condition>
