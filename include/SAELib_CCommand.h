@@ -14,7 +14,7 @@
 namespace sae
 {
 
-	template <typename CallbackT, typename KeyT = std::string_view>
+	template <typename CallbackT, typename KeyT = std::string>
 	class basic_command_set : public Decorate_ContainerIterator<basic_command_set<CallbackT, KeyT>, std::unordered_map<KeyT, CallbackT>>
 	{
 	public:

@@ -10,6 +10,7 @@
 #include <concepts>
 #include <type_traits>
 #include <mutex>
+#include <iostream>
 
 namespace sae
 {
@@ -430,7 +431,7 @@ namespace sae
 			resource_lock(mutex_type& _mtx, pointer _val) noexcept :
 				mtx_{ aquire_mtx(_mtx) }, val_{ ((this->mtx_ != nullptr) ? _val : nullptr) }
 			{
-				this->mtx_->lock();
+				//this->mtx_->lock();
 			};
 
 			mutex_type* mtx_ = nullptr;
@@ -501,6 +502,24 @@ namespace sae
 	template <typename T>
 	using resource_guard = basic_resource_guard<T, std::mutex>;
 
+
+	// Thread local input stream  (like std::cin but can be different between threads)
+	extern thread_local inline std::istream cin{ std::cin.rdbuf() };
+
+	// Thread local output stream (like std::cout but can be different between threads)
+	extern thread_local inline std::ostream cout{ std::cout.rdbuf() };
+
+
+	/**
+	 * @brief Sets thread cout and thread cin to be redirected into a different set of streams
+	 * @param _stdin thread cout will now output into this istream
+	 * @param _stdout thread cin will now input into this ostream
+	*/
+	static void redirect_thread_io(std::istream& _tin, std::ostream& _tout)
+	{
+		std::cout.set_rdbuf(_tin.rdbuf());
+		std::cin.set_rdbuf(_tout.rdbuf());
+	};
 
 };
 
