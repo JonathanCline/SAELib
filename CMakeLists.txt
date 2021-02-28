@@ -1,9 +1,6 @@
 cmake_minimum_required (VERSION 3.8)
 
-set(SAE_LIB_CXX_STANDARD 20)
-
-set(CMAKE_CXX_STANDARD ${SAE_LIB_CXX_STANDARD})
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+option(SAELIB_BUILD_TESTS ON)
 
 project(SAELib 
 	VERSION 0.0.1
@@ -16,8 +13,17 @@ add_library(${PROJECT_NAME} INTERFACE)
 
 target_include_directories(${PROJECT_NAME} INTERFACE "include")
 
+if(NOT CMAKE_CXX_STANDARD)
+	message(STATUS "c++ standard not defined")
+endif()
+
+target_compile_definitions(${PROJECT_NAME} 
+	INTERFACE SAELIB_CXX_STANDARD=${CMAKE_CXX_STANDARD})
+
 add_subdirectory("codegen")
 
 enable_testing()
 
-add_subdirectory("tests")
+if(SAELIB_BUILD_TESTS)
+	add_subdirectory("tests")
+endif()
