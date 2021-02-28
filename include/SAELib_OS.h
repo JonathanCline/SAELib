@@ -44,16 +44,6 @@
 
 */
 
-#define SAELIB_OS_WINDOWS false
-
-#define SAELIB_OS_IPHONE_SIM false
-#define SAELIB_OS_IPHONE false
-#define SAELIB_OS_MAC false
-
-#define SAELIB_OS_LINUX false
-#define SAELIB_OS_UNIX false
-#define SAELIB_OS_POSIX false
-
 namespace sae
 {
 	enum OPERATING_SYSTEM_E
@@ -72,7 +62,9 @@ namespace sae
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 
-#define SAELIB_OS_WINDOWS true
+#define SAELIB_OS_WINDOWS
+#define SAELIB_OS_WINDOWS_V true
+
 namespace sae
 {
 	constexpr static OPERATING_SYSTEM_E target_os = OPERATING_SYSTEM_E::osWindows;
@@ -84,19 +76,22 @@ namespace sae
 
 
 #if TARGET_IPHONE_SIMULATOR
-#define SAELIB_OS_IPHONE_SIM true
+#define SAELIB_OS_IPHONE_SIM
+#define SAELIB_OS_IPHONE_SIM_V true
 namespace sae
 {
 	constexpr static OPERATING_SYSTEM_E target_os = OPERATING_SYSTEM_E::osIPhoneSim;
 }
 #elif TARGET_OS_IPHONE
-#define SAELIB_OS_IPHONE true
+#define SAELIB_OS_IPHONE
+#define SAELIB_OS_IPHONE_V true
 namespace sae
 {
 	constexpr static OPERATING_SYSTEM_E target_os = OPERATING_SYSTEM_E::osIPhone;
 }
 #elif TARGET_OS_MAC
-#define SAELIB_OS_MAC true
+#define SAELIB_OS_MAC
+#define SAELIB_OS_MAC_V true
 namespace sae
 {
 	constexpr static OPERATING_SYSTEM_E target_os = OPERATING_SYSTEM_E::osMac;
@@ -107,21 +102,25 @@ namespace sae
 
 #elif __linux__
 
-#define SAELIB_OS_LINUX true
+#define SAELIB_OS_LINUX
+#define SAELIB_OS_LINUX_V true
 namespace sae
 {
 	constexpr static OPERATING_SYSTEM_E target_os = OPERATING_SYSTEM_E::osLinux;
 }
 #elif __unix__
 
-#define SAELIB_OS_UNIX true
+#define SAELIB_OS_UNIX
+#define SAELIB_OS_UNIX_V true
 namespace sae
 {
 	constexpr static OPERATING_SYSTEM_E target_os = OPERATING_SYSTEM_E::osUnix;
 }
 #elif defined(_POSIX_VERSION)
 
-#define SAELIB_OS_POSIX true
+#define SAELIB_OS_POSIX
+#define SAELIB_OS_POSIX_V true
+
 namespace sae
 {
 	constexpr static OPERATING_SYSTEM_E target_os = OPERATING_SYSTEM_E::osPosix;
@@ -131,5 +130,32 @@ namespace sae
 # error "Unknown compiler target OS"
 #endif
 
+#ifndef SAELIB_OS_WINDOWS_V 
+#define SAELIB_OS_WINDOWS_V false
+#endif
+
+#ifndef SAELIB_OS_IPHONE_SIM_V 
+#define SAELIB_OS_IPHONE_SIM_V false
+#endif
+
+#ifndef SAELIB_OS_IPHONE_V 
+#define SAELIB_OS_IPHONE_V false
+#endif
+
+#ifndef SAELIB_OS_MAC_V 
+#define SAELIB_OS_MAC_V false
+#endif
+
+#ifndef SAELIB_OS_LINUX_V 
+#define SAELIB_OS_LINUX_V false
+#endif
+
+#ifndef SAELIB_OS_UNIX_V 
+#define SAELIB_OS_UNIX_V false
+#endif
+
+#ifndef SAELIB_OS_POSIX_V 
+#define SAELIB_OS_POSIX_V false
+#endif
 
 #endif

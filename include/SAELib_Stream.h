@@ -9,7 +9,7 @@
 #include <type_traits>
 #include <algorithm>
 #include <vector>
-
+#include <iostream>
 
 namespace sae
 {
@@ -106,6 +106,21 @@ namespace sae
 
 		return _out;
 	};
+
+
+
+	/**
+	 * @brief Sets std::cout and std::cin to be redirected into a different set of streams
+	 * @param _stdin std::cout will now output into this istream
+	 * @param _stdout std::cin will now input into this ostream
+	*/
+	static void redirect_standard_io(std::istream& _stdin, std::ostream& _stdout)
+	{
+		std::cout.rdbuf(_stdin.rdbuf());
+		std::cin.rdbuf(_stdout.rdbuf());
+	};
+
+
 
 }
 
