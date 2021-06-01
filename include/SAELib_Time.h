@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <concepts>
 #include <chrono>
-#include <ctime>
+#include <time.h>
 #include <string>
 #include <iomanip>
 #include <string_view>
@@ -249,7 +249,20 @@ namespace sae
 	static timestamp local_timestamp(const ClockT& _clock = ClockT{})
 	{
 		const auto _ctime = _clock.to_time_t(_clock.now());
+#if defined(WIN32)
+		tm _buffer[1]{};
+		const auto _error = (int)localtime_s(&_buffer[0], &_ctime);
+		const auto _tlocal = &_buffer[0];
+#else
 		const auto _tlocal = std::localtime(&_ctime);
+		const auto _error = errno();
+#endif
+	#ifndef NDEBUG
+		if (_error != 0)
+		{
+			std::exit(_error);
+		};
+	#endif
 		return timestamp{ _tlocal };
 	};
 	

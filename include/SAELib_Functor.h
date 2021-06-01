@@ -1,6 +1,12 @@
 #pragma once
-#ifndef SAE_FUNCTOR_H
-#define SAE_FUNCTOR_H
+#ifndef SAELIB_FUNCTOR_H
+#define SAELIB_FUNCTOR_H
+
+#define _SAELIB_FUNCTOR_
+
+/*
+	Consider this stable.
+*/
 
 /*
 	Copyright 2020 Jonathan Cline
@@ -15,19 +21,29 @@
 	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+/*
+	Confirmed to compile on MSVC for c++ versions 14, 17, 20   (as of 2/28/2021) 
+*/
+
 
 /*
 	sae::functor<> works almost identically to the std::function<> type.
+
 	However, instead of having to use std::bind for a member function, there is builtin functionality for "binding" a
 	member function.
+
 	This has substantially less compile-time code generation when compiling in Debug mode.
+
 	Example Code:
+
 	#include "SAE_Functor.h"
 	#include <iostream>
+
 	int foo(const int& _a)
 	{
 		return _a + 1;
 	};
+
 	struct bar
 	{
 		int foobar(const int& _a)
@@ -36,6 +52,7 @@
 		};
 		bar() = default;
 	};
+
 	int main()
 	{
 		int i = 0;
@@ -50,20 +67,21 @@
 	};
 */
 
-#include <type_traits>
+#include "SAELib_Config.h"
+
 #include <utility>
+#include <new>
+
+#ifndef SAELIB_CONSTEXPR
+#define SAELIB_CONSTEXPR constexpr
+#endif
 
 namespace sae
 {
-	template <typename _T>
-	struct cxType_t
+	
+	namespace impl
 	{
-		using type = _T;
-		constexpr cxType_t() = default;
-	};
 
-	namespace detail
-	{
 		template <typename ReturnT, typename... Args>
 		struct functionPtr_t
 		{
@@ -72,7 +90,7 @@ namespace sae
 			virtual inline functionPtr_t<ReturnT, Args...>* clone() const = 0;
 			virtual inline ReturnT invoke(Args... _a) const = 0;
 
-			constexpr functionPtr_t() noexcept = default;
+			SAELIB_CONSTEXPR functionPtr_t() noexcept = default;
 			virtual ~functionPtr_t() {};
 
 		};
@@ -80,6 +98,9 @@ namespace sae
 		template <typename ReturnT, typename... Args>
 		struct freeFunctionPtr_t : public functionPtr_t<ReturnT, Args...>
 		{
+		private:
+			using ParentT = functionPtr_t<ReturnT, Args...>;
+
 		public:
 
 			virtual inline functionPtr_t<ReturnT, Args...>* clone() const final
@@ -88,22 +109,15 @@ namespace sae
 			};
 			virtual inline ReturnT invoke(Args... args) const final
 			{
-				if constexpr (std::is_same<void, ReturnT>::value)
-				{
-					(*fptr)(args...);
-				}
-				else
-				{
-					return (*fptr)(args...);
-				};
+				return (*fptr)(args...);
 			};
 
 			using function_pointer = ReturnT(*)(Args...);
 
-			constexpr freeFunctionPtr_t(const function_pointer& _p) noexcept :
+			SAELIB_CONSTEXPR freeFunctionPtr_t(const function_pointer& _p) noexcept :
 				fptr{ _p }
 			{};
-			constexpr freeFunctionPtr_t() noexcept = default;
+			SAELIB_CONSTEXPR freeFunctionPtr_t() noexcept = default;
 
 		private:
 			function_pointer fptr;
@@ -112,6 +126,9 @@ namespace sae
 		template <typename ReturnT, class ScopeT, typename... Args>
 		struct memberFunctionPtr_t : public functionPtr_t<ReturnT, Args...>
 		{
+		private:
+			using ParentT = functionPtr_t<ReturnT, Args...>;
+
 		public:
 
 			virtual inline functionPtr_t<ReturnT, Args...>* clone() const final
@@ -120,24 +137,17 @@ namespace sae
 			};
 			virtual inline ReturnT invoke(Args... args) const final
 			{
-				if constexpr (std::is_same<void, ReturnT>::value)
-				{
-					(class_ptr->*fptr)(args...);
-				}
-				else
-				{
-					return (class_ptr->*fptr)(args...);
-				};
+				return (class_ptr->*fptr)(args...);
 			};
 
 			using function_pointer = ReturnT(ScopeT::*)(Args...);
 
 
-			constexpr memberFunctionPtr_t(const function_pointer& _f, ScopeT* _c) noexcept :
+			SAELIB_CONSTEXPR memberFunctionPtr_t(const function_pointer& _f, ScopeT* _c) noexcept :
 				fptr{ _f }, class_ptr{ _c }
 			{};
 
-			constexpr memberFunctionPtr_t() noexcept = default;
+			SAELIB_CONSTEXPR memberFunctionPtr_t() noexcept = default;
 
 		private:
 			function_pointer fptr;
@@ -145,14 +155,14 @@ namespace sae
 
 		};
 
-		template <typename ReturnT, typename... Args>
+
+		template <bool isNoexcept, typename ReturnT, typename... Args>
 		struct functor_impl
 		{
 		public:
-
 			using return_type = ReturnT;
 
-			constexpr bool good() const noexcept { return this->ptr_ != nullptr; };
+			SAELIB_CONSTEXPR bool good() const noexcept { return this->ptr_ != nullptr; };
 
 			void release()
 			{
@@ -164,49 +174,35 @@ namespace sae
 				this->release();
 			};
 			
-			inline ReturnT invoke(Args... _args) const
+			inline ReturnT invoke(Args... _args) const noexcept(isNoexcept)
 			{
-				if constexpr (std::is_same<ReturnT, void>::value)
-				{
-					this->ptr_->invoke(_args...);
-				}
-				else
-				{
-					return this->ptr_->invoke(_args...);
-				};
+				return this->ptr_->invoke(_args...);
 			};
-			inline ReturnT operator()(Args... _args) const
+			inline ReturnT operator()(Args... _args) const noexcept(isNoexcept)
 			{
-				if constexpr (std::is_same<ReturnT, void>::value)
-				{
-					this->ptr_->invoke(_args...);
-				}
-				else
-				{
-					return this->ptr_->invoke(_args...);
-				};
+				return this->ptr_->invoke(_args...);
 			};
 
-			constexpr inline bool is_member_function() const noexcept
+			SAELIB_CONSTEXPR inline bool is_member_function() const noexcept
 			{
 				return this->member_function_;
 			};
-			constexpr inline bool good_pointer() const noexcept
+			SAELIB_CONSTEXPR inline bool good_pointer() const noexcept
 			{
 				return this->good();
 			};
 
-			constexpr explicit operator bool() const noexcept
+			SAELIB_CONSTEXPR explicit operator bool() const noexcept
 			{
 				return this->good();
 			};
 
-			constexpr functor_impl(ReturnT(*_func)(Args...)) :
+			SAELIB_CONSTEXPR functor_impl(ReturnT(*_func)(Args...)) :
 				ptr_{ new freeFunctionPtr_t<ReturnT, Args...>{_func} },
 				member_function_{ false }
 			{};
 			template <class ScopeT>
-			constexpr functor_impl(ReturnT(ScopeT::* _func)(Args...), ScopeT* _p = nullptr) :
+			SAELIB_CONSTEXPR functor_impl(ReturnT(ScopeT::* _func)(Args...), ScopeT* _p = nullptr) :
 				ptr_{ new memberFunctionPtr_t<ReturnT, ScopeT, Args...>{_func, _p} },
 				member_function_{ true }
 			{};
@@ -214,7 +210,7 @@ namespace sae
 			functor_impl& operator=(ReturnT(*_func)(Args...))
 			{
 				delete ptr_;
-				ptr_ = new detail::freeFunctionPtr_t<ReturnT, Args...>{ _func };
+				ptr_ = new impl::freeFunctionPtr_t<ReturnT, Args...>{ _func };
 				this->member_function_ = false;
 				return *this;
 			};
@@ -227,11 +223,11 @@ namespace sae
 				return *this;
 			};
 
-			constexpr functor_impl() noexcept :
+			SAELIB_CONSTEXPR functor_impl() noexcept :
 				ptr_{ nullptr }, member_function_{ false }
 			{};
 
-			constexpr explicit functor_impl(const functor_impl& _o) :
+			SAELIB_CONSTEXPR explicit functor_impl(const functor_impl& _o) :
 				ptr_{ (_o)? _o.ptr_->clone() : nullptr }
 			{};
 			functor_impl& operator=(const functor_impl& _o)
@@ -241,7 +237,7 @@ namespace sae
 				return *this;
 			};
 
-			constexpr explicit functor_impl(functor_impl&& _o) noexcept :
+			SAELIB_CONSTEXPR explicit functor_impl(functor_impl&& _o) noexcept :
 				ptr_{ std::exchange(_o.ptr_, nullptr) }
 			{};
 			functor_impl& operator=(functor_impl&& _o) noexcept
@@ -261,31 +257,87 @@ namespace sae
 			functionPtr_t<ReturnT, Args...>* ptr_;
 		};
 
-		template <typename T>
-		struct funcExpander;
+#ifdef __cpp_deduction_guides
 
-		template <typename Ret, typename... T>
-		struct funcExpander <Ret(T...)>
+		template <typename ReturnT, typename... Args>
+		functor_impl(ReturnT(*)(Args...))->functor_impl<false, ReturnT, Args...>;
+
+		template <typename ReturnT, typename... Args>
+		functor_impl(ReturnT(*)(Args...) noexcept)->functor_impl<true, ReturnT, Args...>;
+
+		template <typename ReturnT, typename ScopeT, typename... Args>
+		functor_impl(ReturnT(ScopeT::*)(Args...), ScopeT*)->functor_impl<false, ReturnT, Args...>;
+
+		template <typename ReturnT, typename ScopeT, typename... Args>
+		functor_impl(ReturnT(ScopeT::*)(Args...) noexcept, ScopeT*)->functor_impl<true, ReturnT, Args...>;
+
+#endif
+
+		template <typename T>
+		struct functor_base;
+
+		template <typename ReturnT, typename... Args>
+		struct functor_base<ReturnT(Args...)> : public functor_impl<false, ReturnT, Args...>
 		{
-			using type = functor_impl<Ret, T...>;
+			using functor_impl<false, ReturnT, Args...>::functor_impl;
+			using functor_impl<false, ReturnT, Args...>::operator=;
 		};
+		
+#ifdef __cpp_noexcept_function_type
+		template <typename ReturnT, typename... Args>
+		struct functor_base<ReturnT(Args...) noexcept> : public functor_impl<true, ReturnT, Args...>
+		{
+			using functor_impl<true, ReturnT, Args...>::functor_impl;
+			using functor_impl<true, ReturnT, Args...>::operator=;
+		};
+#endif
 
-		template <typename T>
-		using funcExpander_t = typename funcExpander<T>::type;
+#ifdef __cpp_deduction_guides
 
-		struct functor_type_tag {};
+		template <typename ReturnT, typename... Args>
+		functor_base(ReturnT(*)(Args...))->functor_base<ReturnT(Args...)>;
 
+		template <typename ReturnT, typename... Args>
+		functor_base(ReturnT(*)(Args...) noexcept)->functor_base<ReturnT(Args...) noexcept>;
+
+		template <typename ReturnT, typename ScopeT, typename... Args>
+		functor_base(ReturnT(ScopeT::*)(Args...), ScopeT*)->functor_base<ReturnT(Args...)>;
+
+		template <typename ReturnT, typename ScopeT, typename... Args>
+		functor_base(ReturnT(ScopeT::*)(Args...) noexcept, ScopeT*)->functor_base<ReturnT(Args...) noexcept>;
+
+#endif
 	};
 
-	template <typename FunctionT> requires requires { detail::funcExpander_t<FunctionT>{}; }
-	struct functor : detail::functor_type_tag, public detail::funcExpander_t<FunctionT>
+#ifdef __cpp_concepts
+	template <typename FunctionT> requires requires { impl::functor_base<FunctionT>{}; }
+#else
+	template <typename FunctionT>
+#endif
+	struct functor : public impl::functor_base<FunctionT>
 	{
 	private:
-		using parent_type = detail::funcExpander_t<FunctionT>;
+		using parent_type = impl::functor_base<FunctionT>;
 	public:
 		using parent_type::parent_type;
 		using parent_type::operator=;
 	};
+	
+#ifdef __cpp_deduction_guides
+
+	template <typename ReturnT, typename... Args>
+	functor(ReturnT(*)(Args...))->functor<ReturnT(Args...)>;
+
+	template <typename ReturnT, typename... Args>
+	functor(ReturnT(*)(Args...) noexcept)->functor<ReturnT(Args...) noexcept>;
+
+	template <typename ReturnT, typename ScopeT, typename... Args>
+	functor(ReturnT(ScopeT::*)(Args...), ScopeT*)->functor<ReturnT(Args...)>;
+
+	template <typename ReturnT, typename ScopeT, typename... Args>
+	functor(ReturnT(ScopeT::*)(Args...) noexcept, ScopeT*)->functor<ReturnT(Args...) noexcept>;
+
+#endif
 
 }
 

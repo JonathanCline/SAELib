@@ -189,8 +189,15 @@ namespace sae
 	};
 
 	template <typename T, typename U>
-	concept cx_forward = cx_same_as<U, std::remove_cvref_t<T>>;
-
+	concept cx_forward = requires(T && a)
+	{
+		U{ std::forward<T>(a) };
+	};
+	template <typename T, typename U>
+	concept cx_forward_assignable = requires(T && a, U b)
+	{
+		b = std::forward<T>(a);
+	};
 
 
 	template <typename T>
@@ -217,7 +224,10 @@ namespace sae
 	constexpr static bool is_iterator_of_type_v = is_iterator_of_type<IterT, T>::value;
 
 
+	template <typename T, template <typename> typename Condition>
+	concept cx_enable_if = Condition<T>::value;
 
-}
+
+};
 
 #endif

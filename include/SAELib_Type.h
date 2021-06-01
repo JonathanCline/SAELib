@@ -6,6 +6,7 @@
 #include <concepts>
 #include <cstdint>
 #include <tuple>
+#include <variant>
 
 namespace sae
 {
@@ -138,8 +139,58 @@ namespace sae
 	using class_member_variable_member_type_t = typename class_member_variable_member_type<T>::type;
 
 
+	template <typename T, typename = void>
+	struct tuple_to_variant;
+	
+	template <typename... Ts>
+	struct tuple_to_variant<std::tuple<Ts...>, void>
+	{
+		using type = std::variant<Ts...>;
+	};
 
 
+	template <typename T>
+	using tuple_to_variant_t = typename tuple_to_variant<T>::type;
+
+	
+
+	template <typename T, typename Tup, typename = void>
+	struct has_tuple_element : std::false_type {};
+
+	template <typename T, typename... Ts > requires ( std::same_as<T, Ts> || ... )
+	struct has_tuple_element<T, std::tuple<Ts...>, void> : std::true_type {};
+
+	template <typename T, typename Tup>
+	constexpr inline bool has_tuple_element_v = has_tuple_element<T, Tup>::value;
+
+	template <typename T, typename Tup>
+	concept cx_tuple_element = has_tuple_element_v<T, Tup>;
+
+	
+
+	template <typename T>
+	struct remove_forwardref
+	{
+		using type = T;
+	};
+	template <typename T>
+	struct remove_forwardref<T&&>
+	{
+		using type = T;
+	};
+	template <typename T>
+	struct remove_forwardref<const T&>
+	{
+		using type = T;
+	};
+	template <typename T>
+	struct remove_forwardref<T&>
+	{
+		using type = T;
+	};
+
+	template <typename T> requires requires() { typename remove_forwardref<T>::type; }
+	using remove_forwardref_t = typename remove_forwardref<T>::type;
 
 };
 

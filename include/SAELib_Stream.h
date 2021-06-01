@@ -36,9 +36,10 @@ namespace sae
 			{
 				_istr.read((char*)(&_readBuff[0]), std::min(_remainingCount, _bufferLen));
 				const auto _gotCount = _istr.gcount();
+				using size_type = decltype(_gotCount);
 				#ifndef NDEBUG
-				if (!(_gotCount <= _bufferLen)) { std::terminate(); };
-				if (!(_gotCount <= _remainingCount)) { std::terminate(); };
+				if (!(_gotCount <= static_cast<size_type>(_bufferLen))) { std::terminate(); };
+				if (!(_gotCount <= static_cast<size_type>(_remainingCount))) { std::terminate(); };
 				#endif
 				_outIter = std::copy_n(_readBuff, _gotCount, _outIter);
 				_remainingCount -= _gotCount;
