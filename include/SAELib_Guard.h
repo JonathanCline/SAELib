@@ -18,7 +18,7 @@ namespace sae
 			};
 		};
 
-		constexpr explicit scope_watch() noexcept :
+		constexpr scope_watch() noexcept :
 			state_{ true }
 		{};
 

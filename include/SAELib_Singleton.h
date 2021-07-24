@@ -6,37 +6,14 @@
 
 namespace sae
 {
-	namespace impl
+	template <std::default_initializable T, typename TagT = T>
+	inline T& get_singleton()
 	{
-		template <typename T, typename TagT>
-		extern inline std::optional<T> SINGLETON_IMPL{ std::nullopt };
+		static T val_{};
+		return  val_;
 	};
 
-	namespace impl
-	{
-		template <typename T> requires std::is_default_constructible_v<T>
-		constexpr static auto l_default_construct = [](std::optional<T>& _op) 
-		{
-			_op.emplace();
-		};
-	};
-
-	template <typename T, typename TagT = void>
-		requires requires { impl::SINGLETON_IMPL<T, TagT>; }
-	static T& get_singleton()
-	{
-		if (impl::SINGLETON_IMPL<T, TagT>.has_value()) [[likely]]
-		{
-			return impl::SINGLETON_IMPL<T, TagT>.value();
-		}
-		else
-		{
-			impl::SINGLETON_IMPL<T, TagT>.emplace();
-			return get_singleton<T, TagT>();
-		};
-	};
-
-	template <typename T, typename TagT> requires std::is_default_constructible_v<T>
+	template <std::default_initializable T, typename TagT>
 	struct ThreadsafeSingleton
 	{
 	public:
@@ -71,54 +48,18 @@ namespace sae
 
 	};
 
-	namespace impl
+	template <std::default_initializable T, typename TagT = T>
+	inline ThreadsafeSingleton<T, TagT>* get_singleton_threadsafe()
 	{
-		template <typename T, typename TagT> requires std::is_default_constructible_v<T>
-		extern inline std::mutex TS_SINGLETON_IMPL_MTX{};
-
-		template <typename T, typename TagT> requires std::is_default_constructible_v<T>
-		extern inline std::optional<ThreadsafeSingleton<T, TagT>> TS_SINGLETON_IMPL{ std::nullopt };
-
+		static ThreadsafeSingleton<T, TagT> data{};
+		return data;
 	};
 
-	template <typename T, typename TagT = void> requires requires { impl::TS_SINGLETON_IMPL<T, TagT>; }
-	static ThreadsafeSingleton<T, TagT>* get_singleton_threadsafe()
-	{
-		if (impl::TS_SINGLETON_IMPL<T, TagT>.has_value()) [[likely]]
-		{
-			return &impl::TS_SINGLETON_IMPL<T, TagT>.value();
-		}
-		else
-		{
-			impl::TS_SINGLETON_IMPL_MTX<T, TagT>.lock();
-			if (!impl::TS_SINGLETON_IMPL<T, TagT>.has_value())
-			{
-				impl::TS_SINGLETON_IMPL<T, TagT>.emplace();
-			};
-			impl::TS_SINGLETON_IMPL_MTX<T, TagT>.unlock();
-
-			return get_singleton_threadsafe<T, TagT>();
-		};
-	};
-
-	namespace impl
-	{
-		template <typename T, typename TagT> requires std::is_default_constructible_v<T>
-		extern thread_local inline std::optional<T> THREAD_LOCAL_SINGLETON_IMPL{ std::nullopt };
-	};
-
-	template <typename T, typename TagT = void> requires requires { impl::THREAD_LOCAL_SINGLETON_IMPL<T, TagT>; }
+	template <std::default_initializable T, typename TagT = T>
 	static T& get_singleton_thread_local()
 	{
-		if (impl::THREAD_LOCAL_SINGLETON_IMPL<T, TagT>.has_value()) [[likely]]
-		{
-			return impl::THREAD_LOCAL_SINGLETON_IMPL<T, TagT>.value();
-		}
-		else
-		{
-			impl::THREAD_LOCAL_SINGLETON_IMPL<T, TagT>.emplace();
-			return get_singleton_thread_local<T, TagT>();
-		};
+		static thread_local T val{};
+		return val;
 	};
 
 	template <typename T, typename TagT>

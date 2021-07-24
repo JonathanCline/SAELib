@@ -29,26 +29,14 @@ namespace sae
 	namespace impl
 	{
 		template <typename T, typename U, size_t Idx>
-#ifdef __cpp_consteval
-		consteval
-#else
-		constexpr
-#endif
-			inline size_t tuple_index_finder_idx() noexcept
+		consteval inline size_t tuple_index_finder_idx() noexcept
 		{
 			return ((std::is_same_v<T, U>) ? Idx : 0);
 		};
 
 		template <typename T, typename... Ts, size_t... Idxs>
-#ifdef __cpp_concepts
 		requires (std::is_same_v<T, Ts> || ...)
-#endif
-#ifdef __cpp_consteval
-			consteval
-#else
-			constexpr
-#endif
-			inline auto tuple_index_finder(std::tuple<Ts...>* _tup, std::index_sequence<Idxs...> _isq) noexcept
+		consteval inline auto tuple_index_finder(std::tuple<Ts...>* _tup, std::index_sequence<Idxs...> _isq) noexcept
 		{
 			constexpr size_t _index = (tuple_index_finder_idx<T, Ts, Idxs>() + ...);
 			return _index;
@@ -59,19 +47,15 @@ namespace sae
 	struct tuple_element_index;
 
 	template <typename T, typename... Ts>
-#ifdef __cpp_concepts
 	requires ((((std::is_same_v<T, Ts>) ? 1 : 0) + ...) == 1)
-#endif
-		struct tuple_element_index<T, std::tuple<Ts...>, void>
+	struct tuple_element_index<T, std::tuple<Ts...>, void>
 	{
 		using type = size_t;
 		constexpr static type value = impl::tuple_index_finder<T>((std::tuple<Ts...>*)(nullptr), std::make_index_sequence<sizeof...(Ts)>{});
 	};
 
 	template <typename T, typename Tup>
-#ifdef __cpp_concepts
 	requires requires () { typename tuple_element_index<T, Tup>::type; }
-#endif
 	constexpr inline size_t tuple_element_index_v = tuple_element_index<T, Tup>::value;
 
 };
